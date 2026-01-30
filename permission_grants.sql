@@ -1,0 +1,16 @@
+CREATE ROLE FRONTEND_DEV;
+
+CREATE USER CHETAN
+  PASSWORD = '@123Forza_Juve'
+  DEFAULT_ROLE = FRONTEND_DEV
+  MUST_CHANGE_PASSWORD = FALSE;
+
+  GRANT ALL PRIVILEGES ON ACCOUNT TO ROLE FRONTEND_DEV;
+
+show warehouses;
+
+alter warehouse "COMPUTE_WH" SUSPEND;
+
+show tables;
+
+select * from connections;
