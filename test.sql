@@ -1,0 +1,50 @@
+DELETE FROM PI_FLOW.METADATA.DAG_RUN WHERE STATE = 'queued';
+
+
+
+UPDATE PI_FLOW.METADATA.TASK_INSTANCE SET STATE = 'scheduled' WHERE STATE = 'queued' AND ID > 100;
+
+
+DELETE FROM DAG;
+
+
+
+
+DELETE FROM DAG;
+DELETE FROM DAG_RUN;
+DELETE FROM TASK;
+DELETE FROM TASK_DEPENDENCY;
+DELETE FROM TASK_INSTANCE;
+DELETE FROM PI_FLOW.RAW.LOGS;
+
+
+
+
+
+
+SELECT * FROM TASK_INSTANCE WHERE STATE = 'success';
+
+UPDATE DAG SET SCHEDULE_INTERVAL = '@daily' WHERE DAG_ID='dag_1';
+
+INSERT INTO PI_FLOW.METADATA.DAG (
+    DAG_ID,
+    FILELOC,
+    SCHEDULE_INTERVAL,
+    IS_PAUSED,
+    OWNERS,
+    DESCRIPTION,
+    START_DATE,
+    END_DATE,
+    TAGS
+)
+VALUES (
+    'dag_1',
+    '/dags/dag_1.py',
+    '@hourly',
+    FALSE,
+    'data-team',
+    'Sample DAG for extract-transform-load-notify pipeline',
+    '2026-01-27 00:00:00',
+    NULL,
+    'etl,example'
+);
