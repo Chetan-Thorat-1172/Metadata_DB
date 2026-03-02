@@ -1,50 +1,141 @@
-DELETE FROM PI_FLOW.METADATA.DAG_RUN WHERE STATE = 'queued';
-
-
-
-UPDATE PI_FLOW.METADATA.TASK_INSTANCE SET STATE = 'scheduled' WHERE STATE = 'queued' AND ID > 100;
-
-
-DELETE FROM DAG;
-
-
-
-
 DELETE FROM DAG;
 DELETE FROM DAG_RUN;
 DELETE FROM TASK;
 DELETE FROM TASK_DEPENDENCY;
 DELETE FROM TASK_INSTANCE;
+DELETE FROM DAG_FILE;
+
+
+DELETE FROM XCOM;
 DELETE FROM PI_FLOW.RAW.LOGS;
 
+SELECT * FROM TASK;
+SELECT * FROM PI_FLOW.RAW.LOGS;
+CALL PI_FLOW.RAW.LOAD_DATA();
+
+DELETE FROM DAG WHERE DAG_ID='multi_worker_parallel_test';
 
 
 
+SELECT 
+    ti.dag_id,
+    ti.task_id,
+    ti.state,
+    ti.hostname,      
+    ti.start_date
+FROM TASK_INSTANCE ti
+JOIN DAG_RUN dr ON ti.run_id = dr.run_id
+WHERE dr.state = 'success'
+ORDER BY ti.start_date DESC;
 
 
-SELECT * FROM TASK_INSTANCE WHERE STATE = 'success';
 
-UPDATE DAG SET SCHEDULE_INTERVAL = '@daily' WHERE DAG_ID='dag_1';
+DELETE FROM PI_FLOW.METADATA.TASK WHERE DAG_ID = 'simple_test_dag';
+DELETE FROM PI_FLOW.METADATA.TASK_DEPENDENCY WHERE DAG_ID = 'simple_test_dag';
 
-INSERT INTO PI_FLOW.METADATA.DAG (
-    DAG_ID,
-    FILELOC,
-    SCHEDULE_INTERVAL,
-    IS_PAUSED,
-    OWNERS,
-    DESCRIPTION,
-    START_DATE,
-    END_DATE,
-    TAGS
+SELECT TASK_ID, PARAMS 
+FROM PI_FLOW.METADATA.TASK 
+WHERE DAG_ID = 'simple_test_dag';
+
+DELETE FROM PI_FLOW.METADATA.TASK_INSTANCE WHERE DAG_ID = 'simple_test_dag';
+DELETE FROM PI_FLOW.METADATA.DAG_RUN WHERE DAG_ID = 'simple_test_dag';
+DELETE FROM PI_FLOW.METADATA.TASK_DEPENDENCY WHERE DAG_ID = 'simple_test_dag';
+DELETE FROM PI_FLOW.METADATA.TASK WHERE DAG_ID = 'simple_test_dag';
+DELETE FROM PI_FLOW.METADATA.DAG WHERE DAG_ID = 'simple_test_dag';
+DELETE FROM PI_FLOW.METADATA.DAG_FILE WHERE DAG_ID = 'simple_test_dag';
+
+DELETE FROM PI_FLOW.METADATA.DAG_RUN ;
+
+
+DELETE FROM DAG WHERE DAG_ID='complex_branch_test_dag';
+
+
+
+USE PI_FLOW;
+CREATE SCHEMA APP;
+
+CREATE OR REPLACE PROCEDURE PI_FLOW.APP.SP_PROCESS_DATA(
+    PROCESS_DATE STRING,
+    APP_CODE STRING,
+    RESTART_IND STRING
 )
-VALUES (
-    'dag_1',
-    '/dags/dag_1.py',
-    '@hourly',
-    FALSE,
-    'data-team',
-    'Sample DAG for extract-transform-load-notify pipeline',
-    '2026-01-27 00:00:00',
-    NULL,
-    'etl,example'
-);
+RETURNS STRING
+LANGUAGE JAVASCRIPT
+AS
+$$
+    var result_message = "";
+
+    if (RESTART_IND === "Y") {
+        result_message = "Restarting process for " + PROCESS_DATE + " and app " + APP_CODE;
+    } else {
+        result_message = "Running normal process for " + PROCESS_DATE + " and app " + APP_CODE;
+    }
+
+    return result_message;
+$$;
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE PI_FLOW.APP.SP_EXTRACT_FULL(
+    PROCESS_DATE STRING,
+    APPCODE STRING
+)
+RETURNS STRING
+LANGUAGE JAVASCRIPT
+AS
+$$
+    return "Full Extract completed for date: " + PROCESS_DATE;
+$$;
+
+
+
+
+CREATE OR REPLACE PROCEDURE PI_FLOW.APP.SP_LOAD_FULL(
+    PROCESS_DATE STRING,
+    APPCODE STRING
+)
+RETURNS STRING
+LANGUAGE JAVASCRIPT
+AS
+$$
+    return "Full Load completed for date: " + PROCESS_DATE;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE PI_FLOW.APP.SP_EXTRACT_INCREMENTAL(
+    PROCESS_DATE STRING,
+    APPCODE STRING
+)
+RETURNS STRING
+LANGUAGE JAVASCRIPT
+AS
+$$
+    return "Incremental Extract completed for date: " + PROCESS_DATE;
+$$;
+
+
+CREATE OR REPLACE PROCEDURE PI_FLOW.APP.SP_LOAD_INCREMENTAL(
+    PROCESS_DATE STRING,
+    APPCODE STRING
+)
+RETURNS STRING
+LANGUAGE JAVASCRIPT
+AS
+$$
+    return "Incremental Load completed for date: " + PROCESS_DATE;
+$$;
+
+
+
+DELETE FROM DAG_RUN;
+DELETE FROM DAG WHERE DAG_ID='snowflake_daily_ingest';
+DELETE FROM TASK WHERE DAG_ID='snowflake_daily_ingest';
+DELETE FROM TASK_DEPENDENCY WHERE DAG_ID='snowflake_daily_ingest';
+DELETE FROM TASK_INSTANCE WHERE DAG_ID='snowflake_daily_ingest';
+DELETE FROM XCOM;
